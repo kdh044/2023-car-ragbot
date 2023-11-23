@@ -1,10 +1,13 @@
-import streamlit as st   
+import streamlit as st
+import tiktoken
 from loguru import logger
 
 from langchain.chains import ConversationalRetrievalChain
 from langchain.chat_models import ChatOpenAI
 
 from langchain.document_loaders import PyPDFLoader
+from langchain.document_loaders import Docx2txtLoader
+from langchain.document_loaders import UnstructuredPowerPointLoader
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import HuggingFaceEmbeddings
@@ -16,13 +19,12 @@ from langchain.vectorstores import FAISS
 from langchain.callbacks import get_openai_callback
 from langchain.memory import StreamlitChatMessageHistory
 
-
 def main():
     st.set_page_config(
-    page_title="차량용 Q&A 챗봇",  
-    page_icon=":car:")
+    page_title="DirChat",
+    page_icon=":books:")
 
-    st.title("차량용 Q&A 챗봇 :car:")
+    st.title("_Private Data :red[QA Chat]_ :books:")
 
     if "conversation" not in st.session_state:
         st.session_state.conversation = None
@@ -34,13 +36,12 @@ def main():
         st.session_state.processComplete = None
 
     with st.sidebar:
-        uploaded_files =  st.file_uploader("차량 메뉴얼 PDF 파일을 넣어주세요.",type=['pdf'],accept_multiple_files=True)
+        uploaded_files =  st.file_uploader("Upload your file",type=['pdf','docx'],accept_multiple_files=True)
         openai_api_key = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
-        process = st.button("실행")
-
+        process = st.button("Process")
     if process:
         if not openai_api_key:
-            st.info("Open AI키를 입력해주세요.")
+            st.info("Please add your OpenAI API key to continue.")
             st.stop()
         files_text = get_text(uploaded_files)
         text_chunks = get_text_chunks(files_text)
@@ -68,7 +69,6 @@ def main():
             st.markdown(query)
 
         with st.chat_message("assistant"):
-
             chain = st.session_state.conversation
 
             with st.spinner("Thinking..."):
@@ -106,6 +106,12 @@ def get_text(docs):
         if '.pdf' in doc.name:
             loader = PyPDFLoader(file_name)
             documents = loader.load_and_split()
+        elif '.docx' in doc.name:
+            loader = Docx2txtLoader(file_name)
+            documents = loader.load_and_split()
+        elif '.pptx' in doc.name:
+            loader = UnstructuredPowerPointLoader(file_name)
+            documents = loader.load_and_split()
 
         doc_list.extend(documents)
     return doc_list
@@ -113,7 +119,7 @@ def get_text(docs):
 
 def get_text_chunks(text):
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
+        chunk_size=900,
         chunk_overlap=100,
         length_function=tiktoken_len
     )
