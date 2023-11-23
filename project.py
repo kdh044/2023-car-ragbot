@@ -6,8 +6,6 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain.chat_models import ChatOpenAI
 
 from langchain.document_loaders import PyPDFLoader
-from langchain.document_loaders import Docx2txtLoader
-from langchain.document_loaders import UnstructuredPowerPointLoader
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import HuggingFaceEmbeddings
@@ -21,10 +19,10 @@ from langchain.memory import StreamlitChatMessageHistory
 
 def main():
     st.set_page_config(
-    page_title="DirChat",
-    page_icon=":books:")
+    page_title="차량용 Q&A 챗봇",
+    page_icon=":car:")
 
-    st.title("_Private Data :red[QA Chat]_ :books:")
+    st.title("차량용 Q&A 챗봇 :car:")
 
     if "conversation" not in st.session_state:
         st.session_state.conversation = None
@@ -36,23 +34,24 @@ def main():
         st.session_state.processComplete = None
 
     with st.sidebar:
-        uploaded_files =  st.file_uploader("Upload your file",type=['pdf','docx'],accept_multiple_files=True)
+        uploaded_files =  st.file_uploader("차량 메뉴얼 PDF 파일을 넣어주세요.",type=['pdf'],accept_multiple_files=True)
         openai_api_key = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
-        process = st.button("Process")
+        process = st.button("실행")
+
     if process:
         if not openai_api_key:
-            st.info("Please add your OpenAI API key to continue.")
+            st.info("Open AI키를 입력해주세요.")
             st.stop()
         files_text = get_text(uploaded_files)
         text_chunks = get_text_chunks(files_text)
         vetorestore = get_vectorstore(text_chunks)
-     
-        st.session_state.conversation = get_conversation_chain(vetorestore,openai_api_key) 
+
+        st.session_state.conversation = get_conversation_chain(vetorestore,openai_api_key)
 
         st.session_state.processComplete = True
 
     if 'messages' not in st.session_state:
-        st.session_state['messages'] = [{"role": "assistant", 
+        st.session_state['messages'] = [{"role": "assistant",
                                         "content": "안녕하세요! 주어진 문서에 대해 궁금하신 것이 있으면 언제든 물어봐주세요!"}]
 
     for message in st.session_state.messages:
@@ -69,6 +68,7 @@ def main():
             st.markdown(query)
 
         with st.chat_message("assistant"):
+
             chain = st.session_state.conversation
 
             with st.spinner("Thinking..."):
@@ -83,7 +83,7 @@ def main():
                     st.markdown(source_documents[0].metadata['source'], help = source_documents[0].page_content)
                     st.markdown(source_documents[1].metadata['source'], help = source_documents[1].page_content)
                     st.markdown(source_documents[2].metadata['source'], help = source_documents[2].page_content)
-                    
+
 
 
 # Add assistant message to chat history
@@ -97,7 +97,7 @@ def tiktoken_len(text):
 def get_text(docs):
 
     doc_list = []
-    
+
     for doc in docs:
         file_name = doc.name  # doc 객체의 이름을 파일 이름으로 사용
         with open(file_name, "wb") as file:  # 파일을 doc.name으로 저장
@@ -106,12 +106,6 @@ def get_text(docs):
         if '.pdf' in doc.name:
             loader = PyPDFLoader(file_name)
             documents = loader.load_and_split()
-        elif '.docx' in doc.name:
-            loader = Docx2txtLoader(file_name)
-            documents = loader.load_and_split()
-        elif '.pptx' in doc.name:
-            loader = UnstructuredPowerPointLoader(file_name)
-            documents = loader.load_and_split()
 
         doc_list.extend(documents)
     return doc_list
@@ -119,7 +113,7 @@ def get_text(docs):
 
 def get_text_chunks(text):
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=900,
+        chunk_size=1000,
         chunk_overlap=100,
         length_function=tiktoken_len
     )
@@ -132,16 +126,16 @@ def get_vectorstore(text_chunks):
                                         model_name="jhgan/ko-sroberta-multitask",
                                         model_kwargs={'device': 'cpu'},
                                         encode_kwargs={'normalize_embeddings': True}
-                                        )  
+                                        )
     vectordb = FAISS.from_documents(text_chunks, embeddings)
     return vectordb
 
 def get_conversation_chain(vetorestore,openai_api_key):
     llm = ChatOpenAI(openai_api_key=openai_api_key, model_name = 'gpt-3.5-turbo',temperature=0)
     conversation_chain = ConversationalRetrievalChain.from_llm(
-            llm=llm, 
-            chain_type="stuff", 
-            retriever=vetorestore.as_retriever(search_type = 'mmr', vervose = True), 
+            llm=llm,
+            chain_type="stuff",
+            retriever=vetorestore.as_retriever(search_type = 'mmr', vervose = True),
             memory=ConversationBufferMemory(memory_key='chat_history', return_messages=True, output_key='answer'),
             get_chat_history=lambda h: h,
             return_source_documents=True,
