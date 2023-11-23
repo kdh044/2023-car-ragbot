@@ -1,3 +1,12 @@
+pip install langchain unstructured pypdf pdf2image docx2txt pdfminer
+pip install langchain
+pip install pypdf
+pip install openai langchain pypdf tiktoken
+pip install openai
+pip install PyDrive
+pip install loguru
+
+
 import streamlit as st
 import tiktoken
 from loguru import logger
