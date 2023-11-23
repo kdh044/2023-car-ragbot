@@ -1,4 +1,3 @@
-!pip install streamlit
 !pip install langchain unstructured pypdf pdf2image docx2txt pdfminer
 !pip install langchain
 !pip install pypdf
