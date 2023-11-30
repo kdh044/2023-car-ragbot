@@ -16,6 +16,7 @@ from langchain.vectorstores import FAISS
 # from streamlit_chat import message
 from langchain.callbacks import get_openai_callback
 from langchain.memory import StreamlitChatMessageHistory
+import fitz
 
 def main():
     st.set_page_config(
@@ -104,8 +105,19 @@ def get_text(docs):
             file.write(doc.getvalue())
             logger.info(f"Uploaded {file_name}")
         if '.pdf' in doc.name:
-            loader = PyPDFLoader(file_name)
+            loader = PyMuPDFLoader(file_name)
             documents = loader.load_and_split()
+            
+            for doc in documents:
+              doc.page_content = doc.page_content.replace("\n", " ")
+              htmltag = re.compile('<.*?>')
+              doc.page_content = re.sub(htmltag, '', doc.page_content)
+              pagenumber = re.compile('[0-9] [0-9] [0-9]')
+              doc.page_content = re.sub(pagenumber, '', doc.page_content)
+              chinese = re.compile('[一-龥]')
+              doc.page_content = re.sub(chinese, '', doc.page_content)
+              dots = re.compile('[....]')
+              doc.page_ㅇcontent = re.sub(dots, '', doc.page_content)
 
         doc_list.extend(documents)
     return doc_list
