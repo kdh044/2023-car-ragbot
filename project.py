@@ -105,7 +105,7 @@ def get_text(docs):
             file.write(doc.getvalue())
             logger.info(f"Uploaded {file_name}")
         if '.pdf' in doc.name:
-            loader = PyMuPDFLoader(file_name)
+            loader = PyPDFLoader(file_name)
             documents = loader.load_and_split()
             
             for doc in documents:
