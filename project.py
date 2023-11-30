@@ -108,17 +108,6 @@ def get_text(docs):
         if '.pdf' in doc.name:
             loader = PyMuPDFLoader(file_name)
             documents = loader.load_and_split()
-            
-            for doc in documents:
-              doc.page_content = doc.page_content.replace("\n", " ")
-              htmltag = re.compile('<.*?>')
-              doc.page_content = re.sub(htmltag, '', doc.page_content)
-              pagenumber = re.compile('[0-9] [0-9] [0-9]')
-              doc.page_content = re.sub(pagenumber, '', doc.page_content)
-              chinese = re.compile('[一-龥]')
-              doc.page_content = re.sub(chinese, '', doc.page_content)
-              dots = re.compile('[....]')
-              doc.page_ㅇcontent = re.sub(dots, '', doc.page_content)
 
         doc_list.extend(documents)
     return doc_list
