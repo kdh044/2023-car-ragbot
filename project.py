@@ -1,6 +1,7 @@
 import streamlit as st
 import tiktoken
 from loguru import logger
+import re
 
 from langchain.chains import ConversationalRetrievalChain
 from langchain.chat_models import ChatOpenAI
@@ -105,7 +106,7 @@ def get_text(docs):
             file.write(doc.getvalue())
             logger.info(f"Uploaded {file_name}")
         if '.pdf' in doc.name:
-            loader = PyPDFLoader(file_name)
+            loader = fitz(file_name)
             documents = loader.load_and_split()
             
             for doc in documents:
