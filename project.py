@@ -6,7 +6,7 @@ import re
 from langchain.chains import ConversationalRetrievalChain
 from langchain.chat_models import ChatOpenAI
 
-from langchain.document_loaders import PyPDFLoader
+from langchain.document_loaders.pdf import (PyPDFLoader,PyMuPDFLoader)
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import HuggingFaceEmbeddings
@@ -106,7 +106,7 @@ def get_text(docs):
             file.write(doc.getvalue())
             logger.info(f"Uploaded {file_name}")
         if '.pdf' in doc.name:
-            loader = fitz(file_name)
+            loader = PyMuPDFLoader(file_name)
             documents = loader.load_and_split()
             
             for doc in documents:
