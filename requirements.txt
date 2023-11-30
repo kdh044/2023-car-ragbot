@@ -10,3 +10,5 @@ pypdf
 loguru
 docx2txt
 pymupdf
+fitz
+re
